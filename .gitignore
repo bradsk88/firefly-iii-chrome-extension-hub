@@ -1,0 +1,5 @@
+upload.zip
+node_modules/
+yarn-error.log
+.secret
+dist
