@@ -1,33 +1,22 @@
 {
-  "name": "My Firefly III OAuth2 Extension",
+  "name": "Firefly III Extension Hub",
   "version": "1.0",
-  "description": "Description goes here",
+  "description": "Schedules and orchestrates the automatic scraping of bank websites using one or more Firefly III Chrome Extensions",
   "permissions": [
     "identity",
     "clipboardWrite",
     "storage"
   ],
-  "options_page": "options.html",
+  "options_page": "hub.html",
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
     "service_worker": "./dist/background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["https://*.example.com/*"],
-      "js": ["./dist/accounts.js"]
-    },
-    {
-      "matches": ["https://*.example.com/*"],
-      "js": ["./dist/transactions.js"]
-    },
-    {
-      "matches": ["https://*.example.com/*"],
-      "js": ["./dist/opening.js"]
-    }
-  ],
-  "devtools_page": "devtools.html",
+  "content_scripts": [],
+  "icons": {
+    "128": "logo-128.png"
+  },
   "manifest_version": 3
 }
