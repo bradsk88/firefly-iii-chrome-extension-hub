@@ -132,7 +132,15 @@ chrome.runtime.onConnectExternal.addListener(function (port) {
     port.onMessage.addListener(function (msg) {
         console.log('message', msg);
         if (msg.action === "register") {
-            registerConnection(msg.extension);
+            registerConnection(msg.extension)
+                .then(getBearerToken)
+                .then(token => {
+                const port = chrome.runtime.connect(msg.extension);
+                port.postMessage({
+                    action: "login",
+                    token: token,
+                })
+            })
         }
     });
 });
@@ -148,6 +156,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
     } else if (message.action === "get_connections") {
         getRegisteredConnections().then(sendResponse);
+    }  else if (message.action === "check_logged_in") {
+        getBearerToken()
+            .catch(err => false)
+            .then(token => sendResponse(!!token))
     } else {
         backgroundLog(`[UNRECOGNIZED ACTION] ${message.action}`);
         return false;

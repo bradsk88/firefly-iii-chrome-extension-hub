@@ -3,18 +3,10 @@ import {useEffect, useRef, useState} from 'react'
 
 
 const Hub = () => {
-    // const [redirectUri, _] = useState<string>(defaultRedirectUri);
-    // const redirectUriInputRef = useRef<HTMLInputElement>(null);
-
-    // TODO: Store extension name, icon, etc.
+    // TODO: Store extension connection names, icons, etc.
     const [connections, setConnections] = useState<string[]>([]);
     const [checked, setChecked] = useState<boolean>(false);
-    const [requestAutoRun, setRequestAutoRun] = useState<boolean>(true);
 
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        console.log(message);
-        return false;
-    });
     useEffect(() => {
         if (!checked) {
             chrome.runtime.sendMessage(
@@ -27,24 +19,27 @@ const Hub = () => {
             );
             setChecked(true);
         }
-        if (requestAutoRun) {
-            connections.forEach(
-                connection => {
-                    const port = chrome.runtime.connect(connection);
-                    port.postMessage({
-                        action: "request_auto_run",
-                    })
-                    setRequestAutoRun(false);
-                }
-            )
-
-        }
     })
 
     return (
         <>
-            <div>Hub goes here!</div>
-            <div>{connections}</div>
+            <div>Welcome to the Firefly III Extension Hub!</div>
+            <div>Connections:</div>
+            <ul>
+                {connections.map(c => (
+                    <li>{c}</li>
+                ))}
+            </ul>
+            <button onClick={() => {
+                connections.forEach(
+                    connection => {
+                        const port = chrome.runtime.connect(connection);
+                        port.postMessage({
+                            action: "request_auto_run",
+                        })
+                    }
+                );
+            }}>Run auto-export for all connections</button>
         </>
     );
 };
