@@ -21,6 +21,7 @@ declare type OAuthMetaData = {
 }
 
 declare type AuthInputParams = {
+    apiBaseURL: string;
     authorizationEndpoint: string;
     tokenEndpoint: string;
     clientId: string;

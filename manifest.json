@@ -8,8 +8,9 @@
     "storage"
   ],
   "options_page": "hub.html",
-  "host_permissions": [
-    "<all_urls>"
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "./dist/background.js"

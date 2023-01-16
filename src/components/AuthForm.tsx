@@ -30,13 +30,18 @@ const AuthForm = (props: Props) => {
         onSubmit={(e) => {
           e.preventDefault();
 
-          const params = {
-            authorizationEndpoint: `${(baseURL)}/oauth/authorize`,
-            tokenEndpoint: `${(baseURL)}/oauth/token`,
-            clientId,
-            redirectUri,
-          };
-          onSubmit(params)
+          chrome.permissions.request({
+            origins: [`${baseURL}/*`],
+          }, () => {
+              const params = {
+                  apiBaseURL: baseURL,
+                  authorizationEndpoint: `${(baseURL)}/oauth/authorize`,
+                  tokenEndpoint: `${(baseURL)}/oauth/token`,
+                  clientId,
+                  redirectUri,
+              };
+              onSubmit(params)
+          })
         }}
       >
         <fieldset>

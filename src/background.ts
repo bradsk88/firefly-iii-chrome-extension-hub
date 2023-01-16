@@ -78,16 +78,28 @@ const auth = async (params: AuthInputParams) => {
         // TODO: Implement refresh flow
         return chrome.storage.local.set({
             "ffiii": {
-                "bearer_token": response.access_token
+                "bearer_token": response.access_token,
+                "api_base_url": params.apiBaseURL,
             }
         }, () => {
         });
     });
 }
 
-export function getBearerToken(): Promise<string> {
+interface AuthInfo {
+    bearerToken: string;
+    apiBaseUrl: string;
+}
+
+export function getAuthInfo(): Promise<AuthInfo> {
     return chrome.storage.local.get(["ffiii"]).then(r => {
-        return r.ffiii.bearer_token;
+        if (!r.ffiii) {
+            throw new Error("No auth stored");
+        }
+        return {
+            bearerToken: r.ffiii.bearer_token,
+            apiBaseUrl: r.ffiii.api_base_url,
+        };
     });
 }
 
@@ -133,12 +145,13 @@ chrome.runtime.onConnectExternal.addListener(function (port) {
         console.log('message', msg);
         if (msg.action === "register") {
             registerConnection(msg.extension)
-                .then(getBearerToken)
-                .then(token => {
+                .then(getAuthInfo)
+                .then(authInfo => {
                 const port = chrome.runtime.connect(msg.extension);
                 port.postMessage({
                     action: "login",
-                    token: token,
+                    token: authInfo.bearerToken,
+                    api_base_url: authInfo.apiBaseUrl,
                 })
             })
         }
@@ -157,9 +170,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else if (message.action === "get_connections") {
         getRegisteredConnections().then(sendResponse);
     }  else if (message.action === "check_logged_in") {
-        getBearerToken()
-            .catch(err => false)
-            .then(token => sendResponse(!!token))
+        getAuthInfo()
+            .then(token => sendResponse(!!token?.bearerToken))
+            .catch(err => {
+                console.error(err);
+                sendResponse(false);
+            })
     } else {
         backgroundLog(`[UNRECOGNIZED ACTION] ${message.action}`);
         return false;
