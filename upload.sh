@@ -1,2 +1,2 @@
 #!/bin/bash
-zip upload.zip ./*
+zip upload.zip dist/* manifest.json logo*.png
