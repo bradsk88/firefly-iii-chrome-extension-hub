@@ -16,6 +16,9 @@
   "background": {
     "service_worker": "./dist/background.js"
   },
+  "action": {
+    "default_popup": "hub.html"
+  },
   "content_scripts": [],
   "icons": {
     "128": "logo-128.png"

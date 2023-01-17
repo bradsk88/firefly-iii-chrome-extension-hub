@@ -1,7 +1,4 @@
 import {createURLSearchParams, generateCodeChallenge, generateCodeVerifier} from './utils'
-import {AccountsApi, Configuration, TransactionsApi, TransactionStore} from "firefly-iii-typescript-sdk-fetch";
-import {AccountArray, AccountStore} from "firefly-iii-typescript-sdk-fetch/dist/models";
-import {AccountRead} from "firefly-iii-typescript-sdk-fetch/dist/models/AccountRead";
 
 const backgroundLog = (string: string): void => {
     chrome.runtime.sendMessage({
