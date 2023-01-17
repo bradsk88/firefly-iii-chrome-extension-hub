@@ -1,4 +1,33 @@
 import {createURLSearchParams, generateCodeChallenge, generateCodeVerifier} from './utils'
+import notifications = chrome.contentSettings.notifications;
+
+const weeklyExportNotificationID = "firefly-iii-chrome-extension-hub-weekly-export-notification"
+
+chrome.notifications.onButtonClicked.addListener((id) => {
+    if (id !== weeklyExportNotificationID) {
+        return;
+    }
+    chrome.runtime.openOptionsPage();
+})
+
+chrome.runtime.onStartup.addListener(() => {
+    chrome.storage.local.get("firefly_iii_last_run", (data) => {
+        const lastRun: Date = data.firefly_iii_last_run;
+        const secondsSinceLastRun = new Date().getTime() - (lastRun?.getTime() || 0);
+        if (secondsSinceLastRun > 7 * 24 * 60 * 60) {
+            chrome.notifications.create(weeklyExportNotificationID, {
+                requireInteraction: true,
+                iconUrl: chrome.runtime.getURL("logo-128.png"),
+                message: "It's been over a week since your last export!",
+                type: "basic",
+                title: "Weekly transaction export",
+                buttons: [{
+                    title: "Click to begin"
+                }],
+            })
+        }
+    })
+})
 
 const backgroundLog = (string: string): void => {
     chrome.runtime.sendMessage({
@@ -144,13 +173,13 @@ chrome.runtime.onConnectExternal.addListener(function (port) {
             registerConnection(msg.extension)
                 .then(getAuthInfo)
                 .then(authInfo => {
-                const port = chrome.runtime.connect(msg.extension);
-                port.postMessage({
-                    action: "login",
-                    token: authInfo.bearerToken,
-                    api_base_url: authInfo.apiBaseUrl,
+                    const port = chrome.runtime.connect(msg.extension);
+                    port.postMessage({
+                        action: "login",
+                        token: authInfo.bearerToken,
+                        api_base_url: authInfo.apiBaseUrl,
+                    })
                 })
-            })
         }
     });
 });
@@ -166,7 +195,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
     } else if (message.action === "get_connections") {
         getRegisteredConnections().then(sendResponse);
-    }  else if (message.action === "check_logged_in") {
+    } else if (message.action === "check_logged_in") {
         getAuthInfo()
             .then(token => sendResponse(!!token?.bearerToken))
             .catch(err => {

@@ -6,7 +6,8 @@
   "permissions": [
     "identity",
     "clipboardWrite",
-    "storage"
+    "storage",
+    "notifications"
   ],
   "options_page": "hub.html",
   "optional_host_permissions": [
