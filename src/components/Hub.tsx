@@ -1,6 +1,7 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 
+const debug = true;
 
 const Hub = () => {
     // TODO: Store extension connection names, icons, etc.
@@ -21,6 +22,10 @@ const Hub = () => {
         }
     })
 
+    chrome.notifications.onButtonClicked.addListener(() => {
+        chrome.runtime.openOptionsPage();
+    })
+
     return (
         <>
             <div>Welcome to the Firefly III Extension Hub!</div>
@@ -39,7 +44,26 @@ const Hub = () => {
                         })
                     }
                 );
-            }}>Run auto-export for all connections</button>
+            }}>Run auto-export for all connections
+            </button>
+
+            {debug &&
+                <>
+                    <button onClick={() => {
+                        chrome.notifications.create("", {
+                            iconUrl: "logo-128.png",
+                            message: "It's been over a week since your last export!",
+                            type: "basic",
+                            title: "Weekly transaction export",
+                            buttons: [{
+                                title: "Click to open"
+                            }],
+                        })
+                    }}>Test Notification</button>
+                </>
+            }
+
+
         </>
     );
 };
