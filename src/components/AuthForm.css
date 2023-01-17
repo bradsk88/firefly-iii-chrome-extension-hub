@@ -1,0 +1,12 @@
+tr {
+  border: 1px solid black;
+  padding: 16px;
+}
+tr.text-row {
+  padding: 8px 0;
+}
+tr fieldset {
+  background: aquamarine;
+}
+
+/*# sourceMappingURL=AuthForm.css.map */

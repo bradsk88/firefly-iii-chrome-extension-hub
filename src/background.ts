@@ -193,6 +193,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         auth(message.value).catch((error) => {
             backgroundLog(`[error] ${error}`)
         })
+    } else if (message.action === "set_api_base_url") {
+        return chrome.storage.local.set({
+            "ffiii": {
+                "api_base_url": message.value,
+            }
+        }, () => {
+        });
+    } else if (message.action === "set_client_id") {
+        return chrome.storage.local.set({
+            "ffiii": {
+                "client_id": message.value,
+            }
+        }, () => {
+        });
     } else if (message.action === "get_connections") {
         getRegisteredConnections().then(sendResponse);
     } else if (message.action === "check_logged_in") {

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useState} from 'react'
 
 const debug = true;
 
@@ -59,11 +59,15 @@ const Hub = () => {
                                 title: "Click to open"
                             }],
                         })
-                    }}>Test Notification</button>
+                    }}>Test Notification
+                    </button>
                 </>
             }
 
+            <button onClick={() => {
 
+            }}>Log Out
+            </button>
         </>
     );
 };

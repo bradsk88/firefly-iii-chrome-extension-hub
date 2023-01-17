@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { useRef, useState, useEffect } from 'react';
 import AuthForm from './AuthForm';
+import Hub from "./Hub";
 
-type Props = {}
-
-const Initialize = (props: Props) => {
+const Initialize = () => {
   const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/`
 
   const [baseURL, setBaseURL] = useState<string>("")
@@ -35,27 +34,27 @@ const Initialize = (props: Props) => {
 
   return (
     <>
-      <AuthForm
-        redirectUri={redirectUri}
-        onSubmit={(params) => {
-          setLog("");
-          setResult("");
+        {!result &&
+            <AuthForm
+                redirectUri={redirectUri}
+                onSubmit={(params) => {
+                    setLog("");
+                    setResult("");
 
-          chrome.runtime.sendMessage(
-            {
-              action: "submit",
-              value: params,
-            },
-            () => {}
-          );
-        }}
-      />
-      <br />
-      <br />
-      <div>log</div>
-      <textarea id="log" cols={60} rows={10} value={log} ref={logRef} />
-      <div>result</div>
-      <textarea id="result" cols={60} rows={4} value={result} />
+                    chrome.runtime.sendMessage(
+                        {
+                            action: "submit",
+                            value: params,
+                        },
+                        () => {
+                        }
+                    );
+                }}
+            />
+        }
+        {!!result &&
+            <Hub />
+        }
     </>
   );
 }
