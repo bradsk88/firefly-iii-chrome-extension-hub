@@ -19,6 +19,7 @@ const HubWrapper = () => {
         if (message.action === "result") {
             setLoggedIn(!!message.value);
         }
+        return true;
     });
 
     chrome.runtime.sendMessage({
