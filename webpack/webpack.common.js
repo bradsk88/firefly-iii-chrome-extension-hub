@@ -5,7 +5,6 @@ const srcDir = path.join(__dirname, "..", "src");
 module.exports = {
     entry: {
         background: path.join(srcDir, 'background.ts'),
-        initialize: path.join(srcDir, 'initialize.tsx'),
         hub: path.join(srcDir, 'hub.tsx'),
     },
     output: {

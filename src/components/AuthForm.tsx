@@ -15,6 +15,15 @@ const AuthForm = (props: Props) => {
     const [redirectUri, _] = useState<string>(defaultRedirectUri);
     const [authStep, setAuthStep] = useState<number>(0);
 
+    const setAndStoreAuthStep = (n: number) => {
+        setAuthStep(n);
+        chrome.storage.local.set({
+            firefly_iii_auth_step: n,
+        })
+    }
+
+    chrome.storage.local.get({firefly_iii_auth_step: 0}, data => setAuthStep(data.firefly_iii_auth_step));
+
     const [copyButtonText, setCopyButtonText] = useState("copy");
 
     const redirectUriInputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +75,7 @@ const AuthForm = (props: Props) => {
                         </td>
                     </tr>
                     <tr>
-                        <button onClick={() => {
+                        <button disabled={baseURL?.length === 0} onClick={() => {
                             chrome.permissions.request({
                                 origins: [`${baseURL}/*`],
                             }, () => {
@@ -74,7 +83,7 @@ const AuthForm = (props: Props) => {
                                     action: 'set_api_base_url',
                                     value: baseURL,
                                 }).then(() => {
-                                    setAuthStep(authStep + 1);
+                                    setAndStoreAuthStep(authStep + 1);
                                 })
                             });
                         }}>Next
@@ -87,7 +96,8 @@ const AuthForm = (props: Props) => {
                 <table>
                     <tr className={"text-row"}>
                         <td>
-                            Step 2: Navigate to "profile" on your Firefly III instance:
+                            <span>Step 2: Navigate to "profile" on your Firefly III instance </span>
+                            <button onClick={() => window.open(`${baseURL}/profile`)}>Open in new tab</button>
                         </td>
                     </tr>
                     <tr>
@@ -97,7 +107,7 @@ const AuthForm = (props: Props) => {
                     </tr>
                     <tr className={"text-row"}>
                         <td>
-                            Step 3: Navigate to "OAuth" on your Firefly III instance:
+                            Navigate to "OAuth" on your Firefly III instance:
                         </td>
                     </tr>
                     <tr>
@@ -107,7 +117,7 @@ const AuthForm = (props: Props) => {
                     </tr>
                     <tr>
                         <button onClick={() => {
-                            setAuthStep(authStep + 1);
+                            setAndStoreAuthStep(authStep + 1);
                         }}>Next
                         </button>
                     </tr>
@@ -118,11 +128,6 @@ const AuthForm = (props: Props) => {
                     <tr className={"text-row"}>
                         <td>
                             Step 3: Click "Create Client" and copy this URL to the "Redirect URL" box
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div><img src={chrome.runtime.getURL("walkthrough/create-client.png")}/></div>
                         </td>
                     </tr>
                     <tr>
@@ -158,12 +163,19 @@ const AuthForm = (props: Props) => {
                     </tr>
                     <tr>
                         <td>
-                            IMPORTANT: Mark the client as NOT confidential
+                            <div><img src={chrome.runtime.getURL("walkthrough/create-client.png")}/></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <fieldset>
+                                IMPORTANT: Mark the client as NOT confidential
+                            </fieldset>
                         </td>
                     </tr>
                     <tr>
                         <button onClick={() => {
-                            setAuthStep(authStep + 1);
+                            setAndStoreAuthStep(authStep + 1);
                         }}>Next
                         </button>
                     </tr>
@@ -207,7 +219,7 @@ const AuthForm = (props: Props) => {
                                 action: 'set_client_id',
                                 value: clientId,
                             }).then(() => {
-                                setAuthStep(authStep + 1);
+                                setAndStoreAuthStep(authStep + 1);
                             })
                         }}>Next
                         </button>
@@ -229,7 +241,7 @@ const AuthForm = (props: Props) => {
                             clientId: clientId,
                             redirectUri: redirectUri,
                         });
-                        setAuthStep(authStep + 1);
+                        setAndStoreAuthStep(authStep + 1);
                     }}>Confirm</button>
                 </>
             }
@@ -237,8 +249,21 @@ const AuthForm = (props: Props) => {
                 <>
                     <div>A login window has opened (it might be on a different monitor)</div>
                     <div>Enter your login information and authorize this extension</div>
+                    // TODO: Fix this
+                    <div>If this page doesn't change, click "retry" below</div>
+                    <button onClick={() => {
+                        onSubmit({
+                            apiBaseURL: baseURL,
+                            authorizationEndpoint: `${(baseURL)}/oauth/authorize`,
+                            tokenEndpoint: `${(baseURL)}/oauth/token`,
+                            clientId: clientId,
+                            redirectUri: redirectUri,
+                        });
+                    }}>Confirm
+                    </button>
                 </>
             }
+            <button onClick={() => setAndStoreAuthStep(0)}>Start over</button>
         </>
     );
 };
