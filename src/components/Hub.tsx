@@ -44,6 +44,9 @@ const Hub = () => {
                         })
                     }
                 );
+                chrome.storage.local.set({
+                    firefly_iii_last_run: new Date(),
+                })
             }}>Run auto-export for all connections
             </button>
 

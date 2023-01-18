@@ -103,10 +103,8 @@ const auth = async (params: AuthInputParams) => {
 
         // TODO: Implement refresh flow
         return chrome.storage.local.set({
-            "ffiii": {
-                "bearer_token": response.access_token,
-                "api_base_url": params.apiBaseURL,
-            }
+            "ffiii_bearer_token": response.access_token,
+            "ffiii_api_base_url": params.apiBaseURL,
         }, () => {
         });
     });
@@ -118,13 +116,13 @@ interface AuthInfo {
 }
 
 export function getAuthInfo(): Promise<AuthInfo> {
-    return chrome.storage.local.get(["ffiii"]).then(r => {
+    return chrome.storage.local.get(["ffiii_bearer_token", "ffiii_api_base_url"]).then(r => {
         if (!r.ffiii) {
             throw new Error("No auth stored");
         }
         return {
-            bearerToken: r.ffiii.bearer_token,
-            apiBaseUrl: r.ffiii.api_base_url,
+            bearerToken: r.ffiii_bearer_token,
+            apiBaseUrl: r.ffiii_api_base_url,
         };
     });
 }
@@ -144,24 +142,18 @@ const publicClientTokenRequest = async (tokenEndpoint: string, body: URLSearchPa
     return data
 }
 
+let registeredConnections: string[] = [];
+
 async function getRegisteredConnections(): Promise<string[]> {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.get("firefly_iii_hub", (val) => {
-            const curVal = JSON.parse(val.firefly_iii_hub?.connections || "[]");
-            resolve(curVal);
-        });
+        resolve(registeredConnections);
     });
 }
 
 async function registerConnection(extension: string): Promise<void> {
     getRegisteredConnections().then(
         conns => {
-            const connections = Array.from(new Set([...conns, extension]));
-            chrome.storage.local.set({
-                "firefly_iii_hub": {
-                    "connections": JSON.stringify(connections),
-                },
-            })
+            registeredConnections = Array.from(new Set([...conns, extension]));
         }
     )
 }
@@ -195,25 +187,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
     } else if (message.action === "set_api_base_url") {
         return chrome.storage.local.set({
-            "ffiii": {
-                "api_base_url": message.value,
-            }
-        }, () => {
+            "ffiii_api_base_url": message.value,
         });
     } else if (message.action === "set_client_id") {
         return chrome.storage.local.set({
-            "ffiii": {
-                "client_id": message.value,
-            }
-        }, () => {
+            "ffiii_client_id": message.value,
         });
     } else if (message.action === "get_connections") {
         getRegisteredConnections().then(sendResponse);
+    } else if (message.action === "get_auth") {
+        chrome.storage.local.get({
+            ffiii_api_base_url: "",
+            ffiii_client_id: "",
+        })
+            .then(data => sendResponse({
+                apiBaseUrl: data.ffiii_api_base_url,
+                clientId: data.ffiii_client_id,
+            }))
+            .then(sendResponse);
     } else if (message.action === "check_logged_in") {
         getAuthInfo()
             .then(token => sendResponse(!!token?.bearerToken))
             .catch(err => {
-                console.error(err);
+                console.log(err);
                 sendResponse(false);
             })
     } else {

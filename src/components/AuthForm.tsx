@@ -23,6 +23,16 @@ const AuthForm = (props: Props) => {
     }
 
     chrome.storage.local.get({firefly_iii_auth_step: 0}, data => setAuthStep(data.firefly_iii_auth_step));
+    if (!baseURL || !clientId) {
+        chrome.runtime.sendMessage({action: "get_auth"}, auth => {
+            if (!baseURL) {
+                setBaseURL(auth.apiBaseUrl);
+            }
+            if (!clientId) {
+                setClientId(auth.clientId);
+            }
+        })
+    }
 
     const [copyButtonText, setCopyButtonText] = useState("copy");
 
@@ -249,7 +259,7 @@ const AuthForm = (props: Props) => {
                 <>
                     <div>A login window has opened (it might be on a different monitor)</div>
                     <div>Enter your login information and authorize this extension</div>
-                    // TODO: Fix this
+                    {/* TODO: Fix this */}
                     <div>If this page doesn't change, click "retry" below</div>
                     <button onClick={() => {
                         onSubmit({
@@ -259,7 +269,7 @@ const AuthForm = (props: Props) => {
                             clientId: clientId,
                             redirectUri: redirectUri,
                         });
-                    }}>Confirm
+                    }}>Retry
                     </button>
                 </>
             }
