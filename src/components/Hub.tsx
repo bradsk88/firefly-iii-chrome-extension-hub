@@ -27,7 +27,7 @@ const Hub = () => {
     })
 
     return (
-        <>
+        <div className={"hub"}>
             <div>Welcome to the Firefly III Extension Hub!</div>
             <div>Connections:</div>
             <ul>
@@ -63,12 +63,7 @@ const Hub = () => {
                     </button>
                 </>
             }
-
-            <button onClick={() => {
-
-            }}>Log Out
-            </button>
-        </>
+        </div>
     );
 };
 
