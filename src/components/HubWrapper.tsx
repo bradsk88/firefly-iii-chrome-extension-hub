@@ -4,16 +4,10 @@ import Hub from "./Hub";
 import './HubWrapper.css';
 import AuthForm from "./AuthForm";
 
-const debug = true;
-
 const HubWrapper = () => {
     const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org/`
 
     const [loggedIn, setLoggedIn] = useState<boolean>(false);
-
-    chrome.notifications.onButtonClicked.addListener(() => {
-        chrome.runtime.openOptionsPage();
-    })
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === "result") {
@@ -24,17 +18,15 @@ const HubWrapper = () => {
 
     chrome.runtime.sendMessage({
         action: 'check_logged_in',
-    }).then(setLoggedIn);
+    }).then((li) => {
+        setLoggedIn(li);
+    });
 
     return (
         <div className={"hub"}>
             {loggedIn
                 ? <>
                     <Hub/>
-                    <button onClick={() => {
-                        setLoggedIn(false);
-                    }}>Log Out
-                    </button>
                 </>
                 : <AuthForm
                     redirectUri={redirectUri}

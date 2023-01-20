@@ -117,7 +117,7 @@ interface AuthInfo {
 
 export function getAuthInfo(): Promise<AuthInfo> {
     return chrome.storage.local.get(["ffiii_bearer_token", "ffiii_api_base_url"]).then(r => {
-        if (!r.ffiii) {
+        if (!r.ffiii_bearer_token) {
             throw new Error("No auth stored");
         }
         return {

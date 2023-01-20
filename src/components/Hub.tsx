@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {useEffect, useState} from 'react'
 
-const debug = true;
+const debug = false;
 
 const Hub = () => {
     // TODO: Store extension connection names, icons, etc.
