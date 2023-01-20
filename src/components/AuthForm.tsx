@@ -42,6 +42,17 @@ const AuthForm = (props: Props) => {
         setTimeout(() => {
             setCopyButtonText("copy");
         }, 1000);
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            if (message.action === "result") {
+                chrome.runtime.openOptionsPage();
+            }
+            return true;
+        });
+
+        return () => {
+            chrome.runtime.onMessage.removeListener(() => {
+            });
+        }
     }, [copyButtonText]);
 
     return (
@@ -252,7 +263,8 @@ const AuthForm = (props: Props) => {
                             redirectUri: redirectUri,
                         });
                         setAndStoreAuthStep(authStep + 1);
-                    }}>Confirm</button>
+                    }}>Confirm
+                    </button>
                 </>
             }
             {authStep === 5 &&
