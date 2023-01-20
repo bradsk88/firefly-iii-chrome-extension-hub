@@ -39,7 +39,7 @@ const Hub = () => {
             <button onClick={() => {
                 connections.forEach(
                     connection => {
-                        const port = chrome.runtime.connect(connection);
+                        const port = chrome.runtime.connect(connection.id);
                         port.postMessage({
                             action: "request_auto_run",
                         })
