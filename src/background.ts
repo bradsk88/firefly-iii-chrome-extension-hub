@@ -1,5 +1,5 @@
 import {createURLSearchParams, generateCodeChallenge, generateCodeVerifier} from './utils'
-import notifications = chrome.contentSettings.notifications;
+import {Connection} from "./common/connection";
 
 const weeklyExportNotificationID = "firefly-iii-chrome-extension-hub-weekly-export-notification"
 
@@ -142,18 +142,22 @@ const publicClientTokenRequest = async (tokenEndpoint: string, body: URLSearchPa
     return data
 }
 
-let registeredConnections: string[] = [];
+let registeredConnections: Connection[] = [];
 
-async function getRegisteredConnections(): Promise<string[]> {
+async function getRegisteredConnections(): Promise<Connection[]> {
     return new Promise((resolve, reject) => {
         resolve(registeredConnections);
     });
 }
 
-async function registerConnection(extension: string): Promise<void> {
+async function registerConnection(extension: Connection): Promise<void> {
     getRegisteredConnections().then(
         conns => {
-            registeredConnections = Array.from(new Set([...conns, extension]));
+            const cs: {[key: string]: Connection} = {};
+            conns.forEach(c => cs[c.id] = c)
+            extension.name = extension.name || `Untitled [ID:${extension.id}]`
+            cs[extension.id] = extension;
+            registeredConnections = Array.from(new Set(Object.values(cs)));
         }
     )
 }
@@ -162,7 +166,12 @@ chrome.runtime.onConnectExternal.addListener(function (port) {
     port.onMessage.addListener(function (msg) {
         console.log('message', msg);
         if (msg.action === "register") {
-            registerConnection(msg.extension)
+            registerConnection({
+                id: msg.extension,
+                name: msg.name,
+                primaryColor: msg.primary_color_hex,
+                secondaryColor: msg.secondary_color_hex,
+            })
                 .then(getAuthInfo)
                 .then(authInfo => {
                     const port = chrome.runtime.connect(msg.extension);

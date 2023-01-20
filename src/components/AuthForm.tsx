@@ -235,7 +235,7 @@ const AuthForm = (props: Props) => {
                         </td>
                     </tr>
                     <tr>
-                        <button onClick={() => {
+                        <button disabled={clientId?.length === 0} onClick={() => {
                             chrome.runtime.sendMessage({
                                 action: 'set_client_id',
                                 value: clientId,
