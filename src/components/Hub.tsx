@@ -1,11 +1,12 @@
 import * as React from 'react'
 import {useEffect, useState} from 'react'
+import {Connection} from "../common/connection";
 
 const debug = false;
 
 const Hub = () => {
     // TODO: Store extension connection names, icons, etc.
-    const [connections, setConnections] = useState<string[]>([]);
+    const [connections, setConnections] = useState<Connection[]>([]);
     const [checked, setChecked] = useState<boolean>(false);
 
     useEffect(() => {
@@ -14,7 +15,7 @@ const Hub = () => {
                 {
                     action: "get_connections",
                 },
-                (c: string[]) => {
+                (c: Connection[]) => {
                     setConnections(c);
                 },
             );
@@ -32,7 +33,7 @@ const Hub = () => {
             <div>Connections:</div>
             <ul>
                 {connections.map(c => (
-                    <li>{c}</li>
+                    <li>{c.name}</li>
                 ))}
             </ul>
             <button onClick={() => {
