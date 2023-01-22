@@ -142,11 +142,12 @@ const publicClientTokenRequest = async (tokenEndpoint: string, body: URLSearchPa
     return data
 }
 
-let registeredConnections: Connection[] = [];
-
 async function getRegisteredConnections(): Promise<Connection[]> {
     return new Promise((resolve, reject) => {
-        resolve(registeredConnections);
+        chrome.storage.local.get("firefly_iii_hub_connections", (val) => {
+            const curVal = JSON.parse(val.firefly_iii_hub_connections || "[]");
+            resolve(curVal);
+        });
     });
 }
 
@@ -157,7 +158,9 @@ async function registerConnection(extension: Connection): Promise<void> {
             conns.forEach(c => cs[c.id] = c)
             extension.name = extension.name || `Untitled [ID:${extension.id}]`
             cs[extension.id] = extension;
-            registeredConnections = Array.from(new Set(Object.values(cs)));
+            chrome.storage.local.set({
+                "firefly_iii_hub_connections": JSON.stringify(Object.values(cs)),
+            })
         }
     )
 }

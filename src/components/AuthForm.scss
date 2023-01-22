@@ -7,4 +7,18 @@ tr {
   fieldset {
     background: aquamarine;
   }
+  td {
+    height: 36px;
+  }
+}
+div.buttons {
+  display: flex;
+  flex-flow: row nowrap;
+  & > button {
+    height: 36px;
+    &:first-child {
+      flex-grow: 1;
+    }
+  }
+
 }

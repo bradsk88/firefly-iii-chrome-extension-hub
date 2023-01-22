@@ -7,6 +7,17 @@ type Props = {
     onSubmit: (params: AuthInputParams) => void
 }
 
+enum AuthStep {
+    EnterURL = 0,
+    AcceptPerms,
+    OpenProfile ,
+    PasteRedirectUrl,
+    PasteClientId,
+    Review,
+    AuthFlow,
+
+}
+
 const AuthForm = (props: Props) => {
     const {redirectUri: defaultRedirectUri, onSubmit} = props;
 
@@ -22,7 +33,7 @@ const AuthForm = (props: Props) => {
         })
     }
 
-    chrome.storage.local.get({firefly_iii_auth_step: 0}, data => setAuthStep(data.firefly_iii_auth_step));
+    chrome.storage.local.get({firefly_iii_auth_step: AuthStep.EnterURL.valueOf()}, data => setAuthStep(data.firefly_iii_auth_step));
     if (!baseURL || !clientId) {
         chrome.runtime.sendMessage({action: "get_auth"}, auth => {
             if (!baseURL) {
@@ -55,9 +66,66 @@ const AuthForm = (props: Props) => {
         }
     }, [copyButtonText]);
 
+    const handleButtonClick = function () {
+        switch (authStep) {
+            case AuthStep.EnterURL:
+                setAndStoreAuthStep(authStep + 1);
+                chrome.permissions.request({
+                    origins: [`${baseURL}/*`],
+                }, () => {
+                    chrome.runtime.sendMessage({
+                        action: 'set_api_base_url',
+                        value: baseURL,
+                    }).then(() => {
+                        setAndStoreAuthStep(authStep + 1);
+                    })
+                });
+                return;
+            case AuthStep.PasteClientId:
+                chrome.runtime.sendMessage({
+                    action: 'set_client_id',
+                    value: clientId,
+                }).then(() => {
+                    setAndStoreAuthStep(authStep + 1);
+                })
+                return
+            case AuthStep.Review:
+                onSubmit({
+                    apiBaseURL: baseURL,
+                    authorizationEndpoint: `${(baseURL)}/oauth/authorize`,
+                    tokenEndpoint: `${(baseURL)}/oauth/token`,
+                    clientId: clientId,
+                    redirectUri: redirectUri,
+                });
+                return;
+            default:
+                setAndStoreAuthStep(authStep + 1);
+                return
+        }
+    }
+
+    const isButtonDisabled = () => {
+        switch (authStep) {
+            case AuthStep.EnterURL:
+                return !baseURL;
+            case AuthStep.PasteClientId:
+                return !clientId;
+        }
+    }
+
+    const getButtonText= () => {
+        switch (authStep) {
+            case AuthStep.Review:
+                return "Confirm"
+            case AuthStep.AuthFlow:
+                return "Retry"
+        }
+        return "Next step"
+    }
+
     return (
         <>
-            {authStep == 0 &&
+            {authStep == AuthStep.EnterURL &&
                 <table>
                     <tr className={"text-row"}>
                         <td>
@@ -95,25 +163,28 @@ const AuthForm = (props: Props) => {
                             Your browser will prompt you to accept new permissions.
                         </td>
                     </tr>
+                </table>
+            }
+            {authStep === AuthStep.AcceptPerms &&
+                <table>
+                    <tr className={"text-row"}>
+                        <td>
+                            <span>Step 1.5: Accept the permissions</span>
+                        </td>
+                    </tr>
                     <tr>
-                        <button disabled={baseURL?.length === 0} onClick={() => {
-                            chrome.permissions.request({
-                                origins: [`${baseURL}/*`],
-                            }, () => {
-                                chrome.runtime.sendMessage({
-                                    action: 'set_api_base_url',
-                                    value: baseURL,
-                                }).then(() => {
-                                    setAndStoreAuthStep(authStep + 1);
-                                })
-                            });
-                        }}>Next
-                        </button>
+                        <td>
+                            <div><img src={chrome.runtime.getURL("walkthrough/perm.png")}/></div>
+                        </td>
+                    </tr>
+                    <tr className={"text-row"}>
+                        <td>
+                            This may have opened on a different chrome window. Check them all.
+                        </td>
                     </tr>
                 </table>
             }
-
-            {authStep === 1 &&
+            {authStep === AuthStep.OpenProfile &&
                 <table>
                     <tr className={"text-row"}>
                         <td>
@@ -136,15 +207,9 @@ const AuthForm = (props: Props) => {
                             <div><img src={chrome.runtime.getURL("walkthrough/nav-oauth.png")}/></div>
                         </td>
                     </tr>
-                    <tr>
-                        <button onClick={() => {
-                            setAndStoreAuthStep(authStep + 1);
-                        }}>Next
-                        </button>
-                    </tr>
                 </table>
             }
-            {authStep === 2 &&
+            {authStep === AuthStep.PasteRedirectUrl &&
                 <table>
                     <tr className={"text-row"}>
                         <td>
@@ -194,15 +259,9 @@ const AuthForm = (props: Props) => {
                             </fieldset>
                         </td>
                     </tr>
-                    <tr>
-                        <button onClick={() => {
-                            setAndStoreAuthStep(authStep + 1);
-                        }}>Next
-                        </button>
-                    </tr>
                 </table>
             }
-            {authStep === 3 &&
+            {authStep === AuthStep.PasteClientId &&
                 <table>
                     <tr className={"text-row"}>
                         <td>
@@ -234,58 +293,29 @@ const AuthForm = (props: Props) => {
                             </fieldset>
                         </td>
                     </tr>
-                    <tr>
-                        <button disabled={clientId?.length === 0} onClick={() => {
-                            chrome.runtime.sendMessage({
-                                action: 'set_client_id',
-                                value: clientId,
-                            }).then(() => {
-                                setAndStoreAuthStep(authStep + 1);
-                            })
-                        }}>Next
-                        </button>
-                    </tr>
                 </table>
             }
-            {authStep === 4 &&
+            {authStep === AuthStep.Review &&
                 <>
                     <div>Review the information:</div>
                     <ul>
                         <li>Firefly III URL: {baseURL}</li>
                         <li>Client ID: {clientId}</li>
                     </ul>
-                    <button onClick={() => {
-                        onSubmit({
-                            apiBaseURL: baseURL,
-                            authorizationEndpoint: `${(baseURL)}/oauth/authorize`,
-                            tokenEndpoint: `${(baseURL)}/oauth/token`,
-                            clientId: clientId,
-                            redirectUri: redirectUri,
-                        });
-                        setAndStoreAuthStep(authStep + 1);
-                    }}>Confirm
-                    </button>
                 </>
             }
-            {authStep === 5 &&
+            {authStep === AuthStep.AuthFlow &&
                 <>
                     <div>A login window has opened (it might be on a different monitor)</div>
                     <div>Enter your login information and authorize this extension</div>
-                    {/* TODO: Fix this */}
+                    {/* TODO: Make this click not necessary */}
                     <div>If this page doesn't change, click "retry" below</div>
-                    <button onClick={() => {
-                        onSubmit({
-                            apiBaseURL: baseURL,
-                            authorizationEndpoint: `${(baseURL)}/oauth/authorize`,
-                            tokenEndpoint: `${(baseURL)}/oauth/token`,
-                            clientId: clientId,
-                            redirectUri: redirectUri,
-                        });
-                    }}>Retry
-                    </button>
                 </>
             }
-            <button onClick={() => setAndStoreAuthStep(0)}>Start over</button>
+            <div className={"buttons"}>
+                <button disabled={isButtonDisabled()} onClick={() => handleButtonClick()}>{getButtonText()}</button>
+                <button onClick={() => setAndStoreAuthStep(0)}>Start over</button>
+            </div>
         </>
     );
 };
