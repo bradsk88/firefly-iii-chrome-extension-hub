@@ -8,5 +8,19 @@ tr.text-row {
 tr fieldset {
   background: aquamarine;
 }
+tr td {
+  height: 36px;
+}
+
+div.buttons {
+  display: flex;
+  flex-flow: row nowrap;
+}
+div.buttons > button {
+  height: 36px;
+}
+div.buttons > button:first-child {
+  flex-grow: 1;
+}
 
 /*# sourceMappingURL=AuthForm.css.map */

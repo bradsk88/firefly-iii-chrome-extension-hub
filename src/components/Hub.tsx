@@ -31,12 +31,15 @@ const Hub = () => {
         <div className={"hub"}>
             <div>Welcome to the Firefly III Extension Hub!</div>
             <div>Connections:</div>
+            {connections?.length === 0 &&
+                <div>No connections found. Try reloading your scraper extension(s) and then reload this page.</div>
+            }
             <ul>
                 {connections.map(c => (
                     <li>{c.name}</li>
                 ))}
             </ul>
-            <button onClick={() => {
+            <button disabled={connections?.length === 0} onClick={() => {
                 connections.forEach(
                     connection => {
                         const port = chrome.runtime.connect(connection.id);
