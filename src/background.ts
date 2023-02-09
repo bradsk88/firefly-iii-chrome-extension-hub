@@ -10,23 +10,58 @@ chrome.notifications.onButtonClicked.addListener((id) => {
     chrome.runtime.openOptionsPage();
 })
 
-chrome.runtime.onStartup.addListener(() => {
-    chrome.storage.local.get("firefly_iii_last_run", (data) => {
-        const lastRun: Date = data.firefly_iii_last_run;
-        const secondsSinceLastRun = new Date().getTime() - (lastRun?.getTime() || 0);
-        if (secondsSinceLastRun > 7 * 24 * 60 * 60) {
-            chrome.notifications.create(weeklyExportNotificationID, {
-                requireInteraction: true,
-                iconUrl: chrome.runtime.getURL("logo-128.png"),
-                message: "It's been over a week since your last export!",
-                type: "basic",
-                title: "Weekly transaction export",
-                buttons: [{
-                    title: "Click to begin"
-                }],
-            })
-        }
-    })
+async function notifyIfDueForWeeklyRun(): Promise<void> {
+    const data = await chrome.storage.local.get("firefly_iii_last_run")
+    const lastRun: Date = data.firefly_iii_last_run;
+    const secondsSinceLastRun = new Date().getTime() - (lastRun?.getTime() || 0);
+    if (secondsSinceLastRun > 7 * 24 * 60 * 60) {
+        chrome.notifications.create(weeklyExportNotificationID, {
+            requireInteraction: true,
+            iconUrl: chrome.runtime.getURL("logo-128.png"),
+            message: "It's been over a week since your last export!",
+            type: "basic",
+            title: "Weekly transaction export",
+            buttons: [{
+                title: "Click to begin"
+            }],
+        })
+    }
+}
+
+async function reAuthIfExpired(): Promise<boolean> {
+    const data = await chrome.storage.local.get({
+        ffiii_bearer_created_milliseconds: "",
+        ffiii_bearer_lifetime_seconds: "",
+    });
+    let created = data.ffiii_bearer_created_milliseconds;
+    if (!created) {
+        console.log("Never authed before");
+        return false;
+    }
+    let lifetime = data.ffiii_bearer_lifetime_seconds;
+    const expiresAtDateSeconds = (created / 1000) + lifetime;
+    const threeDaysSeconds = 3 * 24 * 60 * 60;
+    const refreshAtDateSeconds = expiresAtDateSeconds - threeDaysSeconds;
+    let refreshAtDateMillis = refreshAtDateSeconds * 1000;
+    const refreshAtDate = new Date(refreshAtDateMillis);
+    refreshAtDate.setHours(0, 0, 0, 0);
+    refreshAtDateMillis = refreshAtDate.getTime();
+    console.log(`Will refresh after ${refreshAtDate}`);
+    console.log(`Token expires after ${new Date(expiresAtDateSeconds * 1000)}`);
+    if (new Date().getTime() < refreshAtDateMillis) {
+        console.log('Too early for refresh')
+        return true;
+    }
+    console.log('Refreshing now!')
+    await reauth();
+    return true;
+}
+
+chrome.runtime.onStartup.addListener(async () => {
+    const authed = await reAuthIfExpired();
+    if (authed) {
+        await notifyIfDueForWeeklyRun();
+    }
 })
 
 const backgroundLog = (string: string): void => {
