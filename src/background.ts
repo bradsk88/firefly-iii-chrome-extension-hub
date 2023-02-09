@@ -101,12 +101,47 @@ const auth = async (params: AuthInputParams) => {
         }, () => {
         });
 
-        // TODO: Implement refresh flow
         return chrome.storage.local.set({
             "ffiii_bearer_token": response.access_token,
+            "ffiii_refresh_token": response.refresh_token,
+            "ffiii_bearer_created_milliseconds": new Date().getTime(),
+            "ffiii_bearer_lifetime_seconds": response.expires_in,
             "ffiii_api_base_url": params.apiBaseURL,
         }, () => {
         });
+    });
+}
+
+async function reauth(): Promise<void> {
+    const data = await chrome.storage.local.get({
+        ffiii_api_base_url: "",
+        ffiii_client_id: "",
+        ffiii_refresh_token: "",
+    });
+
+    console.log('stored data', data);
+
+    const tokenEndpoint = `${data.ffiii_api_base_url}/oauth/token`
+
+    const body = createURLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: data.ffiii_client_id,
+        refresh_token: data.ffiii_refresh_token,
+    })
+
+    const response = await publicClientTokenRequest(
+        tokenEndpoint,
+        body,
+    );
+
+    console.log('refresh response', response);
+
+    return chrome.storage.local.set({
+        "ffiii_bearer_token": response.access_token,
+        "ffiii_refresh_token": response.refresh_token,
+        "ffiii_bearer_created_milliseconds": new Date().getTime(),
+        "ffiii_bearer_lifetime_seconds": response.expires_in,
+    }, () => {
     });
 }
 
@@ -197,6 +232,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         auth(message.value).catch((error) => {
             backgroundLog(`[error] ${error}`)
         })
+    } else if (message.action === "refresh_auth") {
+
+        reauth();
     } else if (message.action === "set_api_base_url") {
         return chrome.storage.local.set({
             "ffiii_api_base_url": message.value,

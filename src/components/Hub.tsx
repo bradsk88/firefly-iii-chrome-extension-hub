@@ -39,6 +39,19 @@ const Hub = () => {
                     <li>{c.name}</li>
                 ))}
             </ul>
+
+            <button onClick={() => {
+                chrome.runtime.sendMessage(
+                    {
+                        action: "refresh_auth",
+                    },
+                    () => {
+                    },
+                );
+            }}>
+                Refresh Auth
+            </button>
+
             <button disabled={connections?.length === 0} onClick={() => {
                 connections.forEach(
                     connection => {
