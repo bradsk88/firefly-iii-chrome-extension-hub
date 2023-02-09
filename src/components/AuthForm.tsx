@@ -97,6 +97,16 @@ const AuthForm = (props: Props) => {
                     clientId: clientId,
                     redirectUri: redirectUri,
                 });
+                setAndStoreAuthStep(authStep + 1);
+                return;
+            case AuthStep.AuthFlow:
+                onSubmit({
+                    apiBaseURL: baseURL,
+                    authorizationEndpoint: `${(baseURL)}/oauth/authorize`,
+                    tokenEndpoint: `${(baseURL)}/oauth/token`,
+                    clientId: clientId,
+                    redirectUri: redirectUri,
+                });
                 return;
             default:
                 setAndStoreAuthStep(authStep + 1);
@@ -111,6 +121,7 @@ const AuthForm = (props: Props) => {
             case AuthStep.PasteClientId:
                 return !clientId;
         }
+        return false;
     }
 
     const getButtonText= () => {
