@@ -1,6 +1,18 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 import './AuthForm.css';
+import {
+    Alert,
+    Button,
+    Card,
+    CardActions,
+    CardContent,
+    CardMedia,
+    Divider, List, ListItemText,
+    Stack,
+    TextField,
+    Typography
+} from "@mui/material";
 
 type Props = {
     redirectUri: string
@@ -10,7 +22,7 @@ type Props = {
 enum AuthStep {
     EnterURL = 0,
     AcceptPerms,
-    OpenProfile ,
+    OpenProfile,
     PasteRedirectUrl,
     PasteClientId,
     Review,
@@ -124,7 +136,7 @@ const AuthForm = (props: Props) => {
         return false;
     }
 
-    const getButtonText= () => {
+    const getButtonText = () => {
         switch (authStep) {
             case AuthStep.Review:
                 return "Confirm"
@@ -135,200 +147,185 @@ const AuthForm = (props: Props) => {
     }
 
     return (
-        <>
-            {authStep == AuthStep.EnterURL &&
-                <table>
-                    <tr className={"text-row"}>
-                        <td>
-                            Step 1: Enter the URL you see when you open Firefly III (Including http:// or https://)
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div><img src={chrome.runtime.getURL("walkthrough/url.png")}/></div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <fieldset>
-                                <div>
-                                    <label htmlFor="base_url">
-                                        Firefly III URL
-                                    </label>
-                                    <input
-                                        type="url"
-                                        name="base_url"
-                                        placeholder="https://firefly.local"
-                                        size={40}
-                                        form="form"
-                                        required
-                                        value={baseURL}
-                                        onChange={(e) => setBaseURL(e.target.value)}
-                                    />
-                                </div>
-                            </fieldset>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Your browser will prompt you to accept new permissions.
-                        </td>
-                    </tr>
-                </table>
-            }
-            {authStep === AuthStep.AcceptPerms &&
-                <table>
-                    <tr className={"text-row"}>
-                        <td>
-                            <span>Step 1.5: Accept the permissions</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div><img src={chrome.runtime.getURL("walkthrough/perm.png")}/></div>
-                        </td>
-                    </tr>
-                    <tr className={"text-row"}>
-                        <td>
-                            This may have opened on a different chrome window. Check them all.
-                        </td>
-                    </tr>
-                </table>
-            }
-            {authStep === AuthStep.OpenProfile &&
-                <table>
-                    <tr className={"text-row"}>
-                        <td>
-                            <span>Step 2: Navigate to "profile" on your Firefly III instance </span>
-                            <button onClick={() => window.open(`${baseURL}/profile`)}>Open in new tab</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div><img src={chrome.runtime.getURL("walkthrough/nav-profile.png")}/></div>
-                        </td>
-                    </tr>
-                    <tr className={"text-row"}>
-                        <td>
-                            Navigate to "OAuth" on your Firefly III instance:
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div><img src={chrome.runtime.getURL("walkthrough/nav-oauth.png")}/></div>
-                        </td>
-                    </tr>
-                </table>
-            }
-            {authStep === AuthStep.PasteRedirectUrl &&
-                <table>
-                    <tr className={"text-row"}>
-                        <td>
-                            Step 3: Click "Create Client" and copy this URL to the "Redirect URL" box
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <fieldset>
-                                <div>
-                                    <label htmlFor="redirect_uri">redirect_uri</label>
-                                    <input
-                                        ref={redirectUriInputRef}
-                                        type="text"
-                                        id="redirect_uri"
-                                        name="redirect_uri"
-                                        value={redirectUri}
-                                        readOnly
-                                        size={50}
-                                    />
-                                    <button
-                                        id="copy_redirect_uri_button"
-                                        type="button"
-                                        onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-                                            redirectUriInputRef.current?.select();
-                                            redirectUriInputRef.current?.setSelectionRange(0, 99999);
-                                            document.execCommand("copy");
+        <Card>
+            <CardContent>
+                <Typography variant={"h5"}>
+                    Setup Wizard
+                </Typography>
 
-                                            setCopyButtonText("copied!");
-                                        }}
-                                    >
-                                        {copyButtonText}
-                                    </button>
-                                </div>
-                            </fieldset>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div><img src={chrome.runtime.getURL("walkthrough/create-client.png")}/></div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <fieldset>
-                                IMPORTANT: Mark the client as NOT confidential
-                            </fieldset>
-                        </td>
-                    </tr>
-                </table>
-            }
-            {authStep === AuthStep.PasteClientId &&
-                <table>
-                    <tr className={"text-row"}>
-                        <td>
-                            Step 4: After creating the client, copy the Client ID and paste it on this extension page in
-                            the box below.
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div><img src={chrome.runtime.getURL("walkthrough/client-id.png")}/></div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <fieldset>
-                                <div>
-                                    <label htmlFor="base_url">
-                                        Firefly III Client ID
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="client_id"
-                                        placeholder="1"
-                                        size={40}
-                                        value={clientId}
-                                        onChange={(e) => setClientId(e.target.value)}
-                                    />
-                                </div>
-                            </fieldset>
-                        </td>
-                    </tr>
-                </table>
-            }
-            {authStep === AuthStep.Review &&
-                <>
-                    <div>Review the information:</div>
-                    <ul>
-                        <li>Firefly III URL: {baseURL}</li>
-                        <li>Client ID: {clientId}</li>
-                    </ul>
-                </>
-            }
-            {authStep === AuthStep.AuthFlow &&
-                <>
-                    <div>A login window has opened (it might be on a different monitor)</div>
-                    <div>Enter your login information and authorize this extension</div>
-                    {/* TODO: Make this click not necessary */}
-                    <div>If this page doesn't change, click "retry" below</div>
-                </>
-            }
-            <div className={"buttons"}>
-                <button disabled={isButtonDisabled()} onClick={() => handleButtonClick()}>{getButtonText()}</button>
-                <button onClick={() => setAndStoreAuthStep(0)}>Start over</button>
-            </div>
-        </>
+                <Stack spacing={2} mt={2}>
+                    {authStep == AuthStep.EnterURL &&
+                        <Typography variant={"subtitle1"}>
+                            Step 1: Enter the URL you see when you open Firefly III (Including http:// or https://)
+                        </Typography>
+                    }
+                    {authStep === AuthStep.AcceptPerms &&
+                        <Typography variant={"subtitle1"}>
+                            Step 1.5: Accept the permissions
+                        </Typography>
+                    }
+                    {authStep === AuthStep.OpenProfile &&
+                        <div className={"top-with-button"}>
+                            <Typography variant={"subtitle1"}>
+                                Step 2: Navigate to "profile" on your Firefly III instance
+                            </Typography>
+                            <div className={"spacer"}></div>
+                            <Button variant={"contained"}>
+                                Open in new tab
+                            </Button>
+                        </div>
+                    }
+                    {authStep === AuthStep.PasteRedirectUrl &&
+                        <Typography variant={"subtitle1"}>
+                            Step 3: Click "Create Client" and copy this URL to the "Redirect URL" box
+                        </Typography>
+                    }
+                    {authStep === AuthStep.PasteClientId &&
+                        <Typography variant={"subtitle1"}>
+                            Step 4: After creating the client, copy the Client ID and paste it on this extension
+                            page in the box below.
+                        </Typography>
+                    }
+                    {authStep === AuthStep.Review &&
+                        <Typography variant={"subtitle1"}>
+                            Review the information:
+                        </Typography>
+                    }
+
+                    <div>
+                        {authStep == AuthStep.EnterURL &&
+                            <img src={chrome.runtime.getURL("walkthrough/url.png")}></img>
+                        }
+                        {authStep === AuthStep.AcceptPerms &&
+                            <img src={chrome.runtime.getURL("walkthrough/perm.png")}/>
+                        }
+                        {authStep === AuthStep.OpenProfile &&
+                            <img src={chrome.runtime.getURL("walkthrough/nav-profile.png")}/>
+                        }
+                        {authStep === AuthStep.PasteRedirectUrl &&
+                            <img src={chrome.runtime.getURL("walkthrough/create-client.png")}/>
+                        }
+                        {authStep === AuthStep.PasteClientId &&
+                            <img src={chrome.runtime.getURL("walkthrough/client-id.png")}/>
+                        }
+                    </div>
+
+                    {authStep == AuthStep.EnterURL &&
+                        <>
+                            <TextField
+                                fullWidth
+                                autoComplete={"on"}
+                                margin={"normal"}
+                                label="Firefly III URL"
+                                value={baseURL}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    setBaseURL(event.target.value);
+                                }}
+                                placeholder="https://firefly.local"
+                            />
+                            <Alert severity="info">Your browser will prompt you to accept new permissions.</Alert>
+                        </>
+                    }
+                    {authStep === AuthStep.AcceptPerms &&
+                        <>
+                            <Alert severity="warning">This may have opened on a different chrome window. Check them
+                                all.</Alert>
+                        </>
+                    }
+                    {authStep === AuthStep.OpenProfile &&
+                        <>
+                            <Typography variant={"subtitle1"}>
+                                Navigate to "OAuth" on your Firefly III instance:
+                            </Typography>
+                            <div><img src={chrome.runtime.getURL("walkthrough/nav-oauth.png")}/></div>
+                        </>
+                    }
+                    {authStep === AuthStep.PasteRedirectUrl &&
+                        <>
+                        <table>
+                            <tr>
+                                <td>
+                                    <fieldset>
+                                        <div>
+                                            <label htmlFor="redirect_uri">redirect_uri</label>
+                                            <input
+                                                ref={redirectUriInputRef}
+                                                type="text"
+                                                id="redirect_uri"
+                                                name="redirect_uri"
+                                                value={redirectUri}
+                                                readOnly
+                                                size={50}
+                                            />
+                                            <button
+                                                id="copy_redirect_uri_button"
+                                                type="button"
+                                                onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+                                                    redirectUriInputRef.current?.select();
+                                                    redirectUriInputRef.current?.setSelectionRange(0, 99999);
+                                                    document.execCommand("copy");
+
+                                                    setCopyButtonText("copied!");
+                                                }}
+                                            >
+                                                {copyButtonText}
+                                            </button>
+                                        </div>
+                                    </fieldset>
+                                </td>
+                            </tr>
+                        </table>
+                        <Alert severity="warning">
+                            IMPORTANT: Mark the client as NOT confidential
+                        </Alert>
+                        </>
+                    }
+                    {authStep === AuthStep.PasteClientId &&
+                        <table>
+                            <tr>
+                                <td>
+                                    <fieldset>
+                                        <div>
+                                            <label htmlFor="base_url">
+                                                Firefly III Client ID
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="client_id"
+                                                placeholder="1"
+                                                size={40}
+                                                value={clientId}
+                                                onChange={(e) => setClientId(e.target.value)}
+                                            />
+                                        </div>
+                                    </fieldset>
+                                </td>
+                            </tr>
+                        </table>
+                    }
+                    {authStep === AuthStep.Review &&
+                        <List>
+                            <ListItemText primary={baseURL} secondary={"Firefly III URL"}/>
+                            <ListItemText primary={clientId} secondary={"Client ID"}/>
+                        </List>
+                    }
+                    {authStep === AuthStep.AuthFlow &&
+                        <>
+                            <div>A login window has opened (it might be on a different monitor)</div>
+                            <div>Enter your login information and authorize this extension</div>
+                            {/* TODO: Make this click not necessary */}
+                            <div>If this page doesn't change, click "retry" below</div>
+                        </>
+                    }
+                </Stack>
+            </CardContent>
+            <CardActions>
+                <Button variant={"contained"} disabled={isButtonDisabled()}
+                        onClick={() => handleButtonClick()}>{getButtonText()}</Button>
+                <Button onClick={() => setAndStoreAuthStep(0)}>Start over</Button>
+            </CardActions>
+        </Card>
     );
-};
+}
 
 export default AuthForm;
