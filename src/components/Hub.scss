@@ -1,0 +1,11 @@
+.connection {
+  display: flex;
+  flex-flow: row nowrap;
+  .spacer {
+    flex-grow: 1;
+  }
+}
+
+button {
+  text-transform: unset !important;
+}

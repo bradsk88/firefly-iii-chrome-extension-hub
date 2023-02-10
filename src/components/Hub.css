@@ -1,0 +1,13 @@
+.connection {
+  display: flex;
+  flex-flow: row nowrap;
+}
+.connection .spacer {
+  flex-grow: 1;
+}
+
+button {
+  text-transform: unset !important;
+}
+
+/*# sourceMappingURL=Hub.css.map */

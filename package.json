@@ -25,6 +25,10 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@fontsource/roboto": "^4.5.8",
+    "@mui/material": "^5.11.8",
     "firefly-iii-typescript-sdk-fetch": "^1.0.0",
     "js-sha512": "^0.8.0",
     "react": "^18.2.0",
