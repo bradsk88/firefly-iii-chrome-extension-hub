@@ -224,7 +224,7 @@ async function getRegisteredConnections(): Promise<Connection[]> {
 async function registerConnection(extension: Connection): Promise<void> {
     getRegisteredConnections().then(
         conns => {
-            const cs: {[key: string]: Connection} = {};
+            const cs: { [key: string]: Connection } = {};
             conns.forEach(c => cs[c.id] = c)
             extension.name = extension.name || `Untitled [ID:${extension.id}]`
             cs[extension.id] = extension;
@@ -235,27 +235,24 @@ async function registerConnection(extension: Connection): Promise<void> {
     )
 }
 
-chrome.runtime.onConnectExternal.addListener(function (port) {
-    port.onMessage.addListener(function (msg) {
-        console.log('message', msg);
-        if (msg.action === "register") {
-            registerConnection({
-                id: msg.extension,
-                name: msg.name,
-                primaryColor: msg.primary_color_hex,
-                secondaryColor: msg.secondary_color_hex,
-            })
-                .then(getAuthInfo)
-                .then(authInfo => {
-                    const port = chrome.runtime.connect(msg.extension);
-                    port.postMessage({
-                        action: "login",
-                        token: authInfo.bearerToken,
-                        api_base_url: authInfo.apiBaseUrl,
-                    })
+chrome.runtime.onMessageExternal.addListener(function (msg) {
+    console.log('message', msg);
+    if (msg.action === "register") {
+        registerConnection({
+            id: msg.extension,
+            name: msg.name,
+            primaryColor: msg.primary_color_hex,
+            secondaryColor: msg.secondary_color_hex,
+        })
+            .then(getAuthInfo)
+            .then(authInfo => {
+                chrome.runtime.sendMessage(msg.extension, {
+                    action: "login",
+                    token: authInfo.bearerToken,
+                    api_base_url: authInfo.apiBaseUrl,
                 })
-        }
-    });
+            })
+    }
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
