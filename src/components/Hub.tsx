@@ -1,7 +1,17 @@
 import * as React from 'react'
 import {useEffect, useState} from 'react'
 import {Connection} from "../common/connection";
-import {Button, Card, CardActions, CardContent, List, ListItem, ListSubheader} from "@mui/material";
+import {
+    Button,
+    Card,
+    CardActions,
+    CardContent,
+    CardHeader, Icon,
+    IconButton,
+    List,
+    ListItem,
+    ListSubheader, Menu, MenuItem, SvgIcon
+} from "@mui/material";
 import './Hub.css';
 
 interface HubConnection extends Connection {
@@ -15,7 +25,16 @@ function getVariant(h: HubConnection): "text" | "contained" | "outlined" | undef
 const debug = false;
 
 const Hub = () => {
-    // TODO: Store extension connection names, icons, etc.
+
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
     const [connections, setConnections] = useState<HubConnection[]>([]);
     const [checked, setChecked] = useState<boolean>(false);
 
@@ -38,9 +57,19 @@ const Hub = () => {
     })
 
     return (
+        <>
         <Card>
+            <CardHeader
+                action={
+                    <IconButton aria-label="settings" onClick={handleClick}>
+                        <SvgIcon>
+                            <path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+                        </SvgIcon>
+                    </IconButton>
+                }
+                title="Firefly III Extension Hub"
+            />
             <CardContent>
-                <h1>Firefly III Extension Hub</h1>
                 <List>
                     <ListSubheader>Connections:</ListSubheader>
                     {connections?.length === 0 &&
@@ -49,6 +78,9 @@ const Hub = () => {
                     }
                     {connections.map(c => (
                         <ListItem className={"connection"}>
+                            <div className={"icon secondary"} style={{backgroundColor: `#${c.secondaryColor}`}}>
+                                <div className={"icon primary"} style={{backgroundColor: `#${c.primaryColor}`}}></div>
+                            </div>
                             <div>{c.name}</div>
                             <div className={"spacer"}></div>
                             <Button
@@ -141,6 +173,22 @@ const Hub = () => {
                 }
             </CardActions>
         </Card>
+
+            <Menu
+                id="basic-menu"
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                MenuListProps={{
+                    'aria-labelledby': 'basic-button',
+                }}
+            >
+                <MenuItem onClick={() => {
+                    chrome.runtime.openOptionsPage();
+                    handleClose();
+                }}>Open in new tab</MenuItem>
+            </Menu>
+        </>
     );
 };
 
