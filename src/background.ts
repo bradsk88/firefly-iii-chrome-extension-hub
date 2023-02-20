@@ -221,8 +221,8 @@ async function getRegisteredConnections(): Promise<Connection[]> {
     });
 }
 
-async function registerConnection(extension: Connection): Promise<void> {
-    getRegisteredConnections().then(
+async function registerConnection(extension: Connection): Promise<Connection> {
+    return getRegisteredConnections().then(
         conns => {
             const cs: { [key: string]: Connection } = {};
             conns.forEach(c => cs[c.id] = c)
@@ -231,6 +231,7 @@ async function registerConnection(extension: Connection): Promise<void> {
             chrome.storage.local.set({
                 "firefly_iii_hub_connections": JSON.stringify(Object.values(cs)),
             })
+            return extension;
         }
     )
 }
@@ -238,27 +239,18 @@ async function registerConnection(extension: Connection): Promise<void> {
 chrome.runtime.onMessageExternal.addListener(function (msg) {
     console.log('message', msg);
     if (msg.action === "register") {
-        registerConnection({
+        return registerConnection({
             id: msg.extension,
             name: msg.name,
             primaryColor: msg.primary_color_hex,
             secondaryColor: msg.secondary_color_hex,
+            isRegistered: false,
         })
-            .then(getAuthInfo)
-            .then(authInfo => {
-                chrome.runtime.sendMessage(msg.extension, {
-                    action: "login",
-                    token: authInfo.bearerToken,
-                    api_base_url: authInfo.apiBaseUrl,
-                })
-            })
     }
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     backgroundLog(`[message] ${JSON.stringify(message)}`)
-
-    // Remember that all of these need to do ASYNC work (including logging)
 
     if (message.action === "submit") {
         auth(message.value).catch((error) => {
@@ -277,6 +269,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
     } else if (message.action === "get_connections") {
         getRegisteredConnections().then(sendResponse);
+    } else if (message.action === "grant_registration") {
+        getRegisteredConnections().then(cons => {
+            const connection = cons.find(v => v.id === message.extension_id);
+            if (!connection) {
+                throw new Error("Connection was not found in list");
+            }
+            return {...connection, isRegistered: true}
+        })
+            .then(c => registerConnection(c))
+            .then(c => getAuthInfo()
+                .then(ai => chrome.runtime.sendMessage(c.id, {
+                    action: "login",
+                    token: ai.bearerToken,
+                    api_base_url: ai.apiBaseUrl,
+                }))
+            )
+            .then(() => sendResponse(true))
+            .catch(err => {
+                console.error(err);
+                sendResponse(false);
+            });
     } else if (message.action === "get_auth") {
         chrome.storage.local.get({
             ffiii_api_base_url: "",
