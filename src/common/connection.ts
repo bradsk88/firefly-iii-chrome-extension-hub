@@ -3,4 +3,5 @@ export interface Connection {
     name: string;
     primaryColor: string;
     secondaryColor: string;
+    isRegistered: boolean;
 }
