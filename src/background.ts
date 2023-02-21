@@ -1,5 +1,6 @@
 import {createURLSearchParams, generateCodeChallenge, generateCodeVerifier} from './utils'
 import {Connection} from "./common/connection";
+import MessageSender = chrome.runtime.MessageSender;
 
 const weeklyExportNotificationID = "firefly-iii-chrome-extension-hub-weekly-export-notification"
 
@@ -227,6 +228,7 @@ async function registerConnection(extension: Connection): Promise<Connection> {
             const cs: { [key: string]: Connection } = {};
             conns.forEach(c => cs[c.id] = c)
             extension.name = extension.name || `Untitled [ID:${extension.id}]`
+            extension.isRegistered = cs[extension.id]?.isRegistered || extension.isRegistered,
             cs[extension.id] = extension;
             chrome.storage.local.set({
                 "firefly_iii_hub_connections": JSON.stringify(Object.values(cs)),
@@ -236,15 +238,30 @@ async function registerConnection(extension: Connection): Promise<Connection> {
     )
 }
 
-chrome.runtime.onMessageExternal.addListener(function (msg) {
+chrome.runtime.onMessageExternal.addListener(function (msg: any, sender: MessageSender) {
     console.log('message', msg);
     if (msg.action === "register") {
+        if (msg.extension !== sender.id) {
+            console.error("Mismatched extension ID. Possible spoof detected.")
+            return;
+        }
         return registerConnection({
             id: msg.extension,
             name: msg.name,
             primaryColor: msg.primary_color_hex,
             secondaryColor: msg.secondary_color_hex,
             isRegistered: false,
+        })
+    }
+    if (msg.action === "auto_run_duration_seconds") {
+        return getRegisteredConnections().then(cs => {
+            const connection = cs.find(c => c.id === sender.id);
+            if (!connection) {
+                console.error("Received auto run update from non-registered extension", msg);
+                return;
+            }
+            connection.lastAutoRunDurationSeconds = Number.parseInt(msg.seconds);
+            return registerConnection(connection)
         })
     }
 });

@@ -4,4 +4,5 @@ export interface Connection {
     primaryColor: string;
     secondaryColor: string;
     isRegistered: boolean;
+    lastAutoRunDurationSeconds?: number;
 }

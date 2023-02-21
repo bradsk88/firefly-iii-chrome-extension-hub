@@ -39,20 +39,32 @@ const Hub = () => {
     const [pending, setPending] = useState<HubConnection[]>([]);
     const [checked, setChecked] = useState<boolean>(false);
 
-    useEffect(() => {
+    let initialize = () => {
         if (!checked) {
             chrome.runtime.sendMessage(
                 {
                     action: "get_connections",
                 },
                 (c: HubConnection[]) => {
-                    setConnections(c.filter(v => v.isRegistered));
+                    setConnections(c.filter(v => v.isRegistered).sort((a, b): number => {
+                        if (a?.lastAutoRunDurationSeconds === undefined) {
+                            return 1;
+                        }
+                        if (b?.lastAutoRunDurationSeconds === undefined) {
+                            return -1;
+                        }
+                        if (a.lastAutoRunDurationSeconds > b.lastAutoRunDurationSeconds) {
+                            return -1;
+                        }
+                        return 0;
+                    }));
                     setPending(c.filter(v => !v.isRegistered));
                 },
             );
             setChecked(true);
         }
-    })
+    };
+    useEffect(initialize)
 
     chrome.notifications.onButtonClicked.addListener(() => {
         chrome.runtime.openOptionsPage();
@@ -84,7 +96,19 @@ const Hub = () => {
                                     <div className={"icon primary"}
                                          style={{backgroundColor: `#${c.primaryColor}`}}></div>
                                 </div>
-                                <div>{c.name}</div>
+                                <div className={"name-and-subtitle"}>
+                                    <div>{c.name}</div>
+                                    {c.lastAutoRunDurationSeconds === undefined
+                                        ? <div>Has never been run</div>
+                                        : <div>
+                                            <span>Last run: </span>
+                                            <span>{Number(c.lastAutoRunDurationSeconds/60).toFixed(0)}</span>
+                                            <span> minutes </span>
+                                            <span>{Number(c.lastAutoRunDurationSeconds % 60).toFixed(0)}</span>
+                                            <span> seconds</span>
+                                        </div>
+                                    }
+                                </div>
                                 <div className={"spacer"}></div>
                                 <Button
                                     variant={getVariant(c)}
@@ -151,7 +175,10 @@ const Hub = () => {
                                                     () => {
                                                     },
                                                 );
-                                                window.close();
+                                                setTimeout(() => {
+                                                    setChecked(false);
+                                                    initialize();
+                                                }, 1000);
                                             }}
                                         >
                                             <span>Grant</span>
