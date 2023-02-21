@@ -16,6 +16,10 @@
   border-radius: 8px;
   margin-right: 8px;
 }
+.connection div.name-and-subtitle div:last-child {
+  color: #999;
+  font-style: italic;
+}
 
 button {
   text-transform: unset !important;

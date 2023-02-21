@@ -17,6 +17,12 @@
       margin-right: 8px;
     }
   }
+  div.name-and-subtitle {
+    div:last-child {
+      color: #999;
+      font-style: italic;
+    }
+  }
 }
 
 button {
