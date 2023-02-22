@@ -37,10 +37,10 @@ const Hub = () => {
 
     const [connections, setConnections] = useState<HubConnection[]>([]);
     const [pending, setPending] = useState<HubConnection[]>([]);
-    const [checked, setChecked] = useState<boolean>(false);
+    const [checked, setChecked] = useState<Date | undefined>(undefined);
 
-    let initialize = () => {
-        if (!checked) {
+    let initialize = (force = false) => {
+        if (force || new Date().getTime() - (checked?.getTime() || 0) > 1000 * 10) {
             chrome.runtime.sendMessage(
                 {
                     action: "get_connections",
@@ -61,10 +61,11 @@ const Hub = () => {
                     setPending(c.filter(v => !v.isRegistered));
                 },
             );
-            setChecked(true);
+            setChecked(new Date());
         }
     };
     useEffect(initialize)
+    setInterval(initialize, 5000);
 
     chrome.notifications.onButtonClicked.addListener(() => {
         chrome.runtime.openOptionsPage();
@@ -87,11 +88,11 @@ const Hub = () => {
                     <List>
                         <ListSubheader>Connections:</ListSubheader>
                         {connections?.length === 0 &&
-                            <ListItem>No connections found. Try reloading your scraper extension(s) and then reload this
+                            <ListItem key={"none"}>No connections found. Try reloading your scraper extension(s) and then reload this
                                 page.</ListItem>
                         }
                         {connections.map(c => (
-                            <ListItem className={"connection"}>
+                            <ListItem key={c.id} className={"connection"}>
                                 <div className={"icon secondary"} style={{backgroundColor: `#${c.secondaryColor}`}}>
                                     <div className={"icon primary"}
                                          style={{backgroundColor: `#${c.primaryColor}`}}></div>
@@ -149,13 +150,13 @@ const Hub = () => {
                         <>
                             <List>
                                 <ListSubheader>Pending connections:</ListSubheader>
-                                <ListItem>
+                                <ListItem key={"grantdesc"}>
                                     Clicking the "Grant" button will give each
                                     extension permission to talk to this hub
                                     and to communicate with your Firefly III instance.
                                 </ListItem>
                                 {pending.map(c => (
-                                    <ListItem className={"connection"}>
+                                    <ListItem key={c.id} className={"connection"}>
                                         <div className={"icon secondary"}
                                              style={{backgroundColor: `#${c.secondaryColor}`}}>
                                             <div className={"icon primary"}
@@ -175,10 +176,6 @@ const Hub = () => {
                                                     () => {
                                                     },
                                                 );
-                                                setTimeout(() => {
-                                                    setChecked(false);
-                                                    initialize();
-                                                }, 1000);
                                             }}
                                         >
                                             <span>Grant</span>
@@ -195,12 +192,7 @@ const Hub = () => {
                             async connection => {
                                 await chrome.runtime.sendMessage(connection.id, {
                                     action: "request_auto_run",
-                                })
-                                // TODO: Add "cancel auto run" button
-                                const port = chrome.runtime.connect(connection.id);
-                                port.postMessage({
-                                    action: "request_auto_run",
-                                })
+                                });
                             }
                         );
                         setConnections(connections.map(v => {

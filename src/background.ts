@@ -120,31 +120,27 @@ const auth = async (params: AuthInputParams) => {
             code_verifier: PKCECodeVerifier,
         })
 
-        const response = await publicClientTokenRequest(
+        publicClientTokenRequest(
             params.tokenEndpoint,
             body,
-        );
-
-        try {
-            JSON.stringify(response)
-        } catch (e) {
-            backgroundLog(`[error] got malformed json response: ${response}, error: ${e}`)
-        }
-
-        chrome.runtime.sendMessage({
-            action: "result",
-            value: JSON.stringify(response),
-        }, () => {
+        ).then(v => {
+            chrome.runtime.sendMessage({
+                action: "result",
+                value: JSON.stringify(v),
+            }).then(() => {
+                chrome.storage.local.set({
+                    "ffiii_bearer_token": v.access_token,
+                    "ffiii_refresh_token": v.refresh_token,
+                    "ffiii_bearer_created_milliseconds": new Date().getTime(),
+                    "ffiii_bearer_lifetime_seconds": v.expires_in,
+                    "ffiii_api_base_url": params.apiBaseURL,
+                }, () => {
+                })
+            }).catch(e => {
+                backgroundLog(`[error] got malformed json response: ${JSON.stringify(v)}, error: ${e}`)
+            })
         });
-
-        return chrome.storage.local.set({
-            "ffiii_bearer_token": response.access_token,
-            "ffiii_refresh_token": response.refresh_token,
-            "ffiii_bearer_created_milliseconds": new Date().getTime(),
-            "ffiii_bearer_lifetime_seconds": response.expires_in,
-            "ffiii_api_base_url": params.apiBaseURL,
-        }, () => {
-        });
+        return true;
     });
 }
 
@@ -228,9 +224,8 @@ async function registerConnection(extension: Connection): Promise<Connection> {
             const cs: { [key: string]: Connection } = {};
             conns.forEach(c => cs[c.id] = c)
             extension.name = extension.name || `Untitled [ID:${extension.id}]`
-            extension.isRegistered = cs[extension.id]?.isRegistered || extension.isRegistered,
             extension.lastAutoRunDurationSeconds = extension.lastAutoRunDurationSeconds || cs[extension.id]?.lastAutoRunDurationSeconds,
-            cs[extension.id] = extension;
+                cs[extension.id] = extension;
             chrome.storage.local.set({
                 "firefly_iii_hub_connections": JSON.stringify(Object.values(cs)),
             })
@@ -239,23 +234,22 @@ async function registerConnection(extension: Connection): Promise<Connection> {
     )
 }
 
-chrome.runtime.onMessageExternal.addListener(function (msg: any, sender: MessageSender) {
+chrome.runtime.onMessageExternal.addListener(function (msg: any, sender: MessageSender, sendResponse: Function) {
     console.log('message', msg);
     if (msg.action === "register") {
         if (msg.extension !== sender.id) {
             console.error("Mismatched extension ID. Possible spoof detected.")
             return;
         }
-        return registerConnection({
+        registerConnection({
             id: msg.extension,
             name: msg.name,
             primaryColor: msg.primary_color_hex,
             secondaryColor: msg.secondary_color_hex,
             isRegistered: false,
-        })
-    }
-    if (msg.action === "auto_run_duration_seconds") {
-        return getRegisteredConnections().then(cs => {
+        }).then(() => sendResponse());
+    } else if (msg.action === "auto_run_duration_seconds") {
+        getRegisteredConnections().then(cs => {
             const connection = cs.find(c => c.id === sender.id);
             if (!connection) {
                 console.error("Received auto run update from non-registered extension", msg);
@@ -263,7 +257,9 @@ chrome.runtime.onMessageExternal.addListener(function (msg: any, sender: Message
             }
             connection.lastAutoRunDurationSeconds = Number.parseInt(msg.seconds);
             return registerConnection(connection)
-        })
+        }).then(() => sendResponse())
+    } else {
+        sendResponse();
     }
 });
 
@@ -273,20 +269,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "submit") {
         auth(message.value).catch((error) => {
             backgroundLog(`[error] ${error}`)
-        })
+        }).then(() => sendResponse());
     } else if (message.action === "refresh_auth") {
-
-        reauth();
+        reauth().then(() => sendResponse());
     } else if (message.action === "set_api_base_url") {
         return chrome.storage.local.set({
             "ffiii_api_base_url": message.value,
-        });
+        }).then(() => sendResponse());
     } else if (message.action === "set_client_id") {
         return chrome.storage.local.set({
             "ffiii_client_id": message.value,
-        });
+        }).then(() => sendResponse());
     } else if (message.action === "get_connections") {
-        getRegisteredConnections().then(sendResponse);
+        getRegisteredConnections().then(conns => sendResponse(conns));
     } else if (message.action === "grant_registration") {
         getRegisteredConnections().then(cons => {
             const connection = cons.find(v => v.id === message.extension_id);
@@ -317,7 +312,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 apiBaseUrl: data.ffiii_api_base_url,
                 clientId: data.ffiii_client_id,
             }))
-            .then(sendResponse);
+            .then(() => sendResponse());
     } else if (message.action === "check_logged_in") {
         getAuthInfo()
             .then(token => sendResponse(!!token?.bearerToken))
@@ -327,6 +322,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             })
     } else {
         backgroundLog(`[UNRECOGNIZED ACTION] ${message.action}`);
+        sendResponse();
         return false;
     }
     return true

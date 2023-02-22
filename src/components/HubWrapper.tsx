@@ -13,6 +13,7 @@ const HubWrapper = () => {
         if (message.action === "result") {
             setLoggedIn(!!message.value);
         }
+        sendResponse();
         return true;
     });
 
