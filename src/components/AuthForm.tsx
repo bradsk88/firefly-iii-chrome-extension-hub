@@ -243,6 +243,7 @@ const AuthForm = (props: Props) => {
                     {authStep === AuthStep.PasteRedirectUrl &&
                         <>
                         <table>
+                            <tbody>
                             <tr>
                                 <td>
                                     <fieldset>
@@ -274,6 +275,7 @@ const AuthForm = (props: Props) => {
                                     </fieldset>
                                 </td>
                             </tr>
+                            </tbody>
                         </table>
                         <Alert severity="warning">
                             IMPORTANT: Mark the client as NOT confidential
@@ -282,6 +284,7 @@ const AuthForm = (props: Props) => {
                     }
                     {authStep === AuthStep.PasteClientId &&
                         <table>
+                            <tbody>
                             <tr>
                                 <td>
                                     <fieldset>
@@ -301,12 +304,13 @@ const AuthForm = (props: Props) => {
                                     </fieldset>
                                 </td>
                             </tr>
+                            </tbody>
                         </table>
                     }
                     {authStep === AuthStep.Review &&
                         <List>
-                            <ListItemText primary={baseURL} secondary={"Firefly III URL"}/>
-                            <ListItemText primary={clientId} secondary={"Client ID"}/>
+                            <ListItemText primary={baseURL} key={"url"} secondary={"Firefly III URL"}/>
+                            <ListItemText primary={clientId} key={"client_id"} secondary={"Client ID"}/>
                         </List>
                     }
                     {authStep === AuthStep.AuthFlow &&
