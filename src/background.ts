@@ -229,6 +229,7 @@ async function registerConnection(extension: Connection): Promise<Connection> {
             conns.forEach(c => cs[c.id] = c)
             extension.name = extension.name || `Untitled [ID:${extension.id}]`
             extension.isRegistered = cs[extension.id]?.isRegistered || extension.isRegistered,
+            extension.lastAutoRunDurationSeconds = extension.lastAutoRunDurationSeconds || cs[extension.id]?.lastAutoRunDurationSeconds,
             cs[extension.id] = extension;
             chrome.storage.local.set({
                 "firefly_iii_hub_connections": JSON.stringify(Object.values(cs)),
