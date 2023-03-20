@@ -271,7 +271,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             backgroundLog(`[error] ${error}`)
         }).then(() => sendResponse());
     } else if (message.action === "refresh_auth") {
-        reauth().then(() => sendResponse());
+        reauth()
+            .then(getAuthInfo)
+            .then(authInfo => getRegisteredConnections()
+                .then(conns => conns.filter(c => c.isRegistered))
+                .then(conns => conns.forEach(c => chrome.runtime.sendMessage(c.id, {
+                    action: "login",
+                    token: authInfo.bearerToken,
+                    api_base_url: authInfo.apiBaseUrl,
+                })))
+            )
+            .then(() => sendResponse());
     } else if (message.action === "set_api_base_url") {
         return chrome.storage.local.set({
             "ffiii_api_base_url": message.value,
