@@ -21,7 +21,7 @@ Our Chrome extension is designed to scrape website content and financial data fo
 
 **4. Changes to Privacy Policy**
 
-- Any updates to this Privacy Policy will be communicated to users within the extension interface.
+- The privacy policy is subject to change without notice
 
 **5. Contact Information**
 
