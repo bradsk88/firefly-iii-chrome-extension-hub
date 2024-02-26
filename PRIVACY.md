@@ -12,7 +12,6 @@ Our Chrome extension is designed to scrape website content and financial data fo
 
 - Users have full control over the destination of their data and can specify their own API endpoints within the extension settings.
 - Users are responsible for the privacy and security of the APIs they choose to communicate with.
-- We do not have access to, or control over, the data transmitted to user-specified APIs.
 
 **3. Data Security**
 
