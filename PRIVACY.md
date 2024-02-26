@@ -28,9 +28,3 @@ Our Chrome extension is designed to scrape website content and financial data fo
 - If you have questions or concerns about our Privacy Policy or extension practices, please contact [Brad Johnson via GitHub](https://github.com/bradk88).
 
 By using our Chrome extension, you agree to the terms outlined in this Privacy Policy.
-
-Last updated: 2024-02-26
-
-[End of Privacy Policy]
-
-This Privacy Policy underscores user control and data ownership while providing transparency regarding data security practices. Users are encouraged to review the policy and reach out with any questions or concerns.
