@@ -1,4 +1,4 @@
-upload.zip
+*.zip
 node_modules/
 yarn-error.log
 .secret

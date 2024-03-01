@@ -7,7 +7,11 @@
     "watch": "webpack --config webpack/webpack.dev.js --watch",
     "build": "webpack --config webpack/webpack.prod.js",
     "build-dev": "webpack --config webpack/webpack.dev.js",
-    "test": "jest"
+    "test": "jest",
+    "zip": "find .   \\( -name \"node_modules\" -o -name \"src\" -o -name \"webpack\" -o -name \".git\" -o -name \"*.zip\" -o -name \".idea\" \\) -prune   -o \\( -name \".gitignore\" \\) -prune   -o -type f -print | zip -FSr publish.zip -@",
+    "up-version": "read -p \"What version would you like to use for the new release? (Currently $(grep -oP '(?<=\"version\": \")[^\"]*' manifest.json)): \" version && if [[ ! -z \"$version\" ]]; then sed -i.bak \"s/\\\"version\\\": \\\"[^\\\"]*\\\"/\\\"version\\\": \\\"$version\\\"/\" manifest.json && rm -f manifest.json.bak; fi\n",
+    "cl-reminder": "echo \"Remember to update the CHANGELOG for version $(grep -oP '(?<=\"version\": \")[^\"]*' manifest.json)\"\n",
+    "package": "npm run up-version && npm run zip && npm run cl-reminder"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.203",

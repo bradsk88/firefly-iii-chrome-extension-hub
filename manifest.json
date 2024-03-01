@@ -1,7 +1,7 @@
 {
   "name": "Firefly III Extension Hub",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi6yxWgg9khFMyJN4Lr5BH6RVkwxPyqvL1kcI2y2uUaqvmHFRh3rmOMWC3D/iHwuIHhvgOQurynw5ThMzZl2d5On6vQZsdokR35ndUoIsHbuMSRjZFAwSCsdiOFloskC897K4F0CUOOrwINnLCvrjHAR8+3k2PieXDtos5FazPDRLb2A+wvAwqb71C6Z/4yWe8CF6lp2yANIuXkuQyAYsBFy7fr3WBjP8yZ34t1Ic9NTBpsldzlJPbJpxReSEjhaS6DZukYsmE31eD+E5GRvHXTPfDWhQBgB9bA9jh8gcb2dXWXQLNTGcxKvWadu/7oWSAgY0zOT42aRA2/E5HRDoBwIDAQAB",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "Schedules and orchestrates the automatic scraping of bank websites using one or more Firefly III Chrome Extensions",
   "permissions": [
     "identity",

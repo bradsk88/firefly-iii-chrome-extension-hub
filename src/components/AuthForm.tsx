@@ -170,7 +170,7 @@ const AuthForm = (props: Props) => {
                                 Step 2: Navigate to "profile" on your Firefly III instance
                             </Typography>
                             <div className={"spacer"}></div>
-                            <Button variant={"contained"}>
+                            <Button variant={"contained"} onClick={() => window.open(`${baseURL}/profile`, "_blank")}>
                                 Open in new tab
                             </Button>
                         </div>

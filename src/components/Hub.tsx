@@ -16,6 +16,7 @@ import './Hub.css';
 
 interface HubConnection extends Connection {
     isRunning?: boolean; // TODO: Determine this on page load (ask the extension itself)
+    isGranting: boolean;
 }
 
 function getVariant(h: HubConnection): "text" | "contained" | "outlined" | undefined {
@@ -25,6 +26,8 @@ function getVariant(h: HubConnection): "text" | "contained" | "outlined" | undef
 const debug = false;
 
 const Hub = () => {
+
+    let alreadyInitializing = false;
 
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -40,6 +43,10 @@ const Hub = () => {
     const [checked, setChecked] = useState<Date | undefined>(undefined);
 
     let initialize = (force = false) => {
+        if (alreadyInitializing) {
+            return;
+        }
+        alreadyInitializing = true;
         if (force || new Date().getTime() - (checked?.getTime() || 0) > 1000 * 10) {
             chrome.runtime.sendMessage(
                 {
@@ -59,6 +66,7 @@ const Hub = () => {
                         return 0;
                     }));
                     setPending(c.filter(v => !v.isRegistered));
+                    alreadyInitializing = false;
                 },
             );
             setChecked(new Date());
@@ -125,6 +133,9 @@ const Hub = () => {
                                                 return v;
                                             }))
                                         } else {
+                                            await chrome.runtime.sendMessage({
+                                                action: "refresh_auth",
+                                            });
                                             await chrome.runtime.sendMessage(c.id, {
                                                 action: "request_auto_run",
                                             })
@@ -165,20 +176,19 @@ const Hub = () => {
                                         <div>{c.name}</div>
                                         <div className={"spacer"}></div>
                                         <Button
-                                            color={"error"}
+                                            color={c.isGranting ? "secondary" : "error"}
                                             variant={getVariant(c)}
                                             onClick={async () => {
-                                                chrome.runtime.sendMessage(
-                                                    {
-                                                        action: "grant_registration",
-                                                        extension_id: c.id,
-                                                    },
-                                                    () => {
-                                                    },
-                                                );
+                                                setPending(pending.map(
+                                                    v => v.id !== c.id ? v : {...v, isGranting: true},
+                                                ));
+                                                await chrome.runtime.sendMessage({
+                                                    action: "grant_registration",
+                                                    extension_id: c.id,
+                                                });
                                             }}
                                         >
-                                            <span>Grant</span>
+                                            <span>{c.isGranting ? 'Granting...' : 'Grant'}</span>
                                         </Button>
                                     </ListItem>
                                 ))}
@@ -187,35 +197,24 @@ const Hub = () => {
                     }
                 </CardContent>
                 <CardActions>
-                    <Button variant={"contained"} disabled={connections?.length === 0} onClick={() => {
-                        connections.forEach(
-                            async connection => {
-                                await chrome.runtime.sendMessage(connection.id, {
-                                    action: "request_auto_run",
-                                });
-                            }
-                        );
+                    <Button variant={"contained"} disabled={connections?.length === 0} onClick={async () => {
+                        await chrome.runtime.sendMessage({
+                            action: "refresh_auth",
+                        });
+                        for (let connection of connections) {
+                            await chrome.runtime.sendMessage(connection.id, {
+                                action: "request_auto_run",
+                            });
+                        }
                         setConnections(connections.map(v => {
                             v.isRunning = true;
                             return v;
                         }))
-                        chrome.storage.local.set({
+                        await chrome.storage.local.set({
                             firefly_iii_last_run: new Date(),
                         })
                     }}>
                         Run auto-export for all connections
-                    </Button>
-
-                    <Button onClick={() => {
-                        chrome.runtime.sendMessage(
-                            {
-                                action: "refresh_auth",
-                            },
-                            () => {
-                            },
-                        );
-                    }}>
-                        Refresh Auth
                     </Button>
 
                     {debug &&
