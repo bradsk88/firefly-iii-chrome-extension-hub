@@ -202,9 +202,9 @@ const Hub = () => {
                             action: "refresh_auth",
                         });
                         for (let connection of connections) {
-                            await chrome.runtime.sendMessage(connection.id, {
+                            chrome.runtime.sendMessage(connection.id, {
                                 action: "request_auto_run",
-                            });
+                            }, () => {});
                         }
                         setConnections(connections.map(v => {
                             v.isRunning = true;
